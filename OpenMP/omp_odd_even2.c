@@ -160,11 +160,15 @@ void Read_list(int a[], int n) {
 void Odd_even(int a[], int n) {
    int phase, i, tmp;
 
-#  pragma omp parallel num_threads(thread_count) \
-      default(none) shared(a, n) private(i, tmp, phase)
+#  pragma omp parallel num_threads(thread_count) \ default(none) shared(a, n) private(i, tmp, phase)                 
+                                                        //cada hilo  ejecutara una porcion del bucle
+                                                       //num_threads especifica cuantos hilos se deben crear
+                                                       //default es que no debemos asumir un valor determinado, todas las variables se deben declarar publicas o privadas
+                                                      //sahres son las variables privadas y private las privadas
    for (phase = 0; phase < n; phase++) {
       if (phase % 2 == 0)
 #        pragma omp for 
+        //Permite dividir un bucle en múltiples sub-tareas que pueden ser ejecutadas en paralelo por múltiples hilos.
          for (i = 1; i < n; i += 2) {
             if (a[i-1] > a[i]) {
                tmp = a[i-1];
@@ -174,6 +178,7 @@ void Odd_even(int a[], int n) {
          }
       else
 #        pragma omp for 
+        //Permite dividir un bucle en múltiples sub-tareas que pueden ser ejecutadas en paralelo por múltiples hilos.
          for (i = 1; i < n-1; i += 2) {
             if (a[i] > a[i+1]) {
                tmp = a[i+1];
@@ -183,4 +188,3 @@ void Odd_even(int a[], int n) {
          }
    }
 }  /* Odd_even */
-
