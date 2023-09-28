@@ -32,9 +32,9 @@
 #define BARRIER_COUNT 100
 
 int thread_count;
-int counter;
-sem_t barrier_sems[BARRIER_COUNT];
-sem_t count_sem;
+int counter; //contador de cuantos hilos han llegado
+sem_t barrier_sems[BARRIER_COUNT]; //array de semaforos y cada semaforo se utiliza para sincronizar los hilos en una barrera en especifico
+sem_t count_sem; //semaforo que se utiliza para controlar el acceso al contador
 
 void Usage(char* prog_name);
 void *Thread_work(void* rank);
@@ -99,16 +99,16 @@ void *Thread_work(void* rank) {
    int i, j;
 
    for (i = 0; i < BARRIER_COUNT; i++) {
-      sem_wait(&count_sem);
-      if (counter == thread_count - 1) {
-         counter = 0;
-         sem_post(&count_sem);
+      sem_wait(&count_sem); //asegurarse que el acceso al contador sea exclusivo
+      if (counter == thread_count - 1) { //si es igual a thread_count-1 es que todos han llegado
+         counter = 0; //si han llegado reinicia el counter
+         sem_post(&count_sem); //desbloquea el semaforo
          for (j = 0; j < thread_count-1; j++)
-            sem_post(&barrier_sems[i]);
+            sem_post(&barrier_sems[i]); //desbloquean los semaforos de la barrera actual
       } else {
-         counter++;
-         sem_post(&count_sem);
-         sem_wait(&barrier_sems[i]);
+         counter++; //si no e igual se incrementa el contador
+         sem_post(&count_sem);//se libera el semaforo del contador
+         sem_wait(&barrier_sems[i]); //y se pone a esperar el semaforo de la barrera
       }
 #     ifdef DEBUG
       if (my_rank == 0) {
