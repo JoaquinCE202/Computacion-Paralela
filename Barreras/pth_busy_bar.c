@@ -47,7 +47,7 @@ int main(int argc, char* argv[]) {
    thread_handles = malloc (thread_count*sizeof(pthread_t));
    for (i = 0; i < BARRIER_COUNT; i++)
       barrier_thread_counts[i] = 0;
-   pthread_mutex_init(&barrier_mutex, NULL);
+   pthread_mutex_init(&barrier_mutex, NULL); //utilizamos un mutex oara que exista sincronizacion al momento de aumentar el contador para ver si todos los threads han llegado
 
    GET_TIME(start);
    for (thread = 0; thread < thread_count; thread++)
@@ -93,9 +93,9 @@ void *Thread_work(void* rank) {
 
    for (i = 0; i < BARRIER_COUNT; i++) {
       pthread_mutex_lock(&barrier_mutex);
-      barrier_thread_counts[i]++;
+      barrier_thread_counts[i]++; //aumentamos el contador que nos va a decir cuando todos los hios hayan llegado
       pthread_mutex_unlock(&barrier_mutex);
-      while (barrier_thread_counts[i] < thread_count);
+      while (barrier_thread_counts[i] < thread_count); //utilizamos un while en vez de la barrera de pthread
 #     ifdef DEBUG
       if (my_rank == 0) {
          printf("All threads entered barrier %d\n", i);
