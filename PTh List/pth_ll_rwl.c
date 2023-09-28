@@ -41,15 +41,15 @@ struct list_node_s {
 };
 
 /* Shared variables */
-struct      list_node_s* head = NULL;  
-int         thread_count;
-int         total_ops;
-double      insert_percent;
-double      search_percent;
-double      delete_percent;
-pthread_rwlock_t    rwlock;
-pthread_mutex_t     count_mutex;
-int         member_count = 0, insert_count = 0, delete_count = 0;
+struct      list_node_s* head = NULL;  //puntero al primer nodo de la lista
+int         thread_count; //numero de hilos de ejecucion que realizaran operaciones
+int         total_ops; //numero total de operaciones
+double      insert_percent; //porcentaje de inserciones
+double      search_percent; //porcentaje de busquedas
+double      delete_percent; //porcentaje de eliminaciones
+pthread_rwlock_t    rwlock; //read write lock para controlar el acceso
+pthread_mutex_t     count_mutex; //mutex para controlar el acceso concurrente del contador
+int         member_count = 0, insert_count = 0, delete_count = 0; //contadores
 
 /* Setup and cleanup */
 void        Usage(char* prog_name);
@@ -85,7 +85,7 @@ int main(int argc, char* argv[]) {
    i = attempts = 0;
    while ( i < inserts_in_main && attempts < 2*inserts_in_main ) {
       key = my_rand(&seed) % MAX_KEY;
-      success = Insert(key);
+      success = Insert(key); //insertamos claves en la lista
       attempts++;
       if (success) i++;
    }
@@ -97,9 +97,9 @@ int main(int argc, char* argv[]) {
    printf("\n");
 #  endif
 
-   thread_handles = malloc(thread_count*sizeof(pthread_t));
-   pthread_mutex_init(&count_mutex, NULL);
-   pthread_rwlock_init(&rwlock, NULL);
+   thread_handles = malloc(thread_count*sizeof(pthread_t)); //creamos hilos que van a ejecutar thread_work
+   pthread_mutex_init(&count_mutex, NULL); //inicializacion del mutex
+   pthread_rwlock_init(&rwlock, NULL); //inicializacion del read-write
 
    GET_TIME(start);
    for (i = 0; i < thread_count; i++)
@@ -280,7 +280,7 @@ int  Is_empty(void) {
 }  /* Is_empty */
 
 /*-----------------------------------------------------------------*/
-void* Thread_work(void* rank) {
+void* Thread_work(void* rank) { //realiza un numero especifico de operaciones en la lista
    long my_rank = (long) rank;
    int i, val;
    double which_op;
@@ -290,30 +290,30 @@ void* Thread_work(void* rank) {
 
    for (i = 0; i < ops_per_thread; i++) {
       which_op = my_drand(&seed);
-      val = my_rand(&seed) % MAX_KEY;
-      if (which_op < search_percent) {
-         pthread_rwlock_rdlock(&rwlock);
+      val = my_rand(&seed) % MAX_KEY; //valor aleatorio que se utilizara en la operacion
+      if (which_op < search_percent) { //decide que operacion hacer dependiendo de los porcentajes
+         pthread_rwlock_rdlock(&rwlock); //bloqueo de lectura ya que es un find
          Member(val);
          pthread_rwlock_unlock(&rwlock);
          my_member_count++;
       } else if (which_op < search_percent + insert_percent) {
-         pthread_rwlock_wrlock(&rwlock);
+         pthread_rwlock_wrlock(&rwlock); //bloqueo de escritura ya que es un write
          Insert(val);
          pthread_rwlock_unlock(&rwlock);
          my_insert_count++;
       } else { /* delete */
-         pthread_rwlock_wrlock(&rwlock);
+         pthread_rwlock_wrlock(&rwlock);//bloqueo de escritura ya que es un delete
          Delete(val);
          pthread_rwlock_unlock(&rwlock);
          my_delete_count++;
       }
    }  /* for */
 
-   pthread_mutex_lock(&count_mutex);
+   pthread_mutex_lock(&count_mutex); //adquiere mutex del contador
    member_count += my_member_count;
    insert_count += my_insert_count;
    delete_count += my_delete_count;
-   pthread_mutex_unlock(&count_mutex);
+   pthread_mutex_unlock(&count_mutex); //libera mutex del contador
 
    return NULL;
 }  /* Thread_work */
