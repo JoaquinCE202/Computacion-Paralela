@@ -25,7 +25,8 @@
 #include <pthread.h>
 #include "timer.h"
 
-#define BARRIER_COUNT 100
+#define BARRIER_COUNT 100 //cuantas veces los threads van a atravesar la barrera
+
 
 int thread_count;
 pthread_barrier_t barrier;
@@ -43,21 +44,21 @@ int main(int argc, char* argv[]) {
       Usage(argv[0]);
    thread_count = strtol(argv[1], NULL, 10);
 
-   thread_handles = malloc (thread_count*sizeof(pthread_t));
-   pthread_barrier_init(&barrier, NULL, thread_count);
+   thread_handles = malloc (thread_count*sizeof(pthread_t)); //se crea thread_count threads
+   pthread_barrier_init(&barrier, NULL, thread_count); //se inicializa la barrera con un recuento de hilos igual a thread_count
 
    GET_TIME(start);
    for (thread = 0; thread < thread_count; thread++)
       pthread_create(&thread_handles[thread], NULL,
-          Thread_work, (void*) thread);
+          Thread_work, (void*) thread); //cada thread ejecuta la funcion thread_word
 
    for (thread = 0; thread < thread_count; thread++) {
-      pthread_join(thread_handles[thread], NULL);
+      pthread_join(thread_handles[thread], NULL);  //espera a que tdos los hilos terminen
    }
    GET_TIME(finish);
    printf("Elapsed time = %e seconds\n", finish - start);
 
-   pthread_barrier_destroy(&barrier);
+   pthread_barrier_destroy(&barrier);//destruye la barrera
    free(thread_handles);
    return 0;
 }  /* main */
@@ -89,7 +90,7 @@ void *Thread_work(void* rank) {
    int i;
 
    for (i = 0; i < BARRIER_COUNT; i++) {
-      pthread_barrier_wait(&barrier);
+      pthread_barrier_wait(&barrier); //hace que cada hilo espere en la barrera hasta que todos los hilos hayan llegado a este punto
 #     ifdef DEBUG
       if (my_rank == 0) {
          printf("All threads entered barrier %d\n", i);
@@ -100,4 +101,3 @@ void *Thread_work(void* rank) {
 
    return NULL;
 }  /* Thread_work */
-
