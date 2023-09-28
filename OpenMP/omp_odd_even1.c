@@ -166,8 +166,11 @@ void Odd_even(int a[], int n) {
 
    for (phase = 0; phase < n; phase++) {
       if (phase % 2 == 0)
-#        pragma omp parallel for num_threads(thread_count) \
-            default(none) shared(a, n) private(i, tmp)
+#        pragma omp parallel for num_threads(thread_count) \ default(none) shared(a, n) private(i, tmp)
+                                                        //cada hilo  ejecutara una porcion del bucle
+                                                       //num_threads especifica cuantos hilos se deben crear
+                                                       //default es que no debemos asumir un valor determinado, todas las variables se deben declarar publicas o privadas
+                                                      //sahres son las variables privadas y private las privadas
          for (i = 1; i < n; i += 2) {
             if (a[i-1] > a[i]) {
                tmp = a[i-1];
@@ -191,4 +194,3 @@ void Odd_even(int a[], int n) {
 #     endif
    }
 }  /* Odd_even */
-
