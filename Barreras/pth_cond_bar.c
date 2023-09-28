@@ -30,9 +30,9 @@
 #define BARRIER_COUNT 100
 
 int thread_count;
-int barrier_thread_count = 0;
-pthread_mutex_t barrier_mutex;
-pthread_cond_t ok_to_proceed;
+int barrier_thread_count = 0; //registro de cuantos hilos han llegado
+pthread_mutex_t barrier_mutex; //proteger el acceso concurrente al contador
+pthread_cond_t ok_to_proceed; //variable de condicion para que los hilos esperen o despierten
 
 void Usage(char* prog_name);
 void *Thread_work(void* rank);
@@ -96,29 +96,29 @@ void *Thread_work(void* rank) {
    int i;
 
    for (i = 0; i < BARRIER_COUNT; i++) {
-      pthread_mutex_lock(&barrier_mutex);
+      pthread_mutex_lock(&barrier_mutex); //agarramos el candado
       barrier_thread_count++;
-      if (barrier_thread_count == thread_count) {
+      if (barrier_thread_count == thread_count) { //compueba si todos los hilos han llegado
          barrier_thread_count = 0;
 #        ifdef DEBUG
          printf("Thread %ld > Signalling other threads in barrier %d\n", 
                my_rank, i);
          fflush(stdout);
 #        endif
-         pthread_cond_broadcast(&ok_to_proceed);
+         pthread_cond_broadcast(&ok_to_proceed); //despierta a los threads para que continuen
       } else {
          // Wait unlocks mutex and puts thread to sleep.
          //    Put wait in while loop in case some other
          // event awakens thread.
          while (pthread_cond_wait(&ok_to_proceed,
-                   &barrier_mutex) != 0);
+                   &barrier_mutex) != 0); //desbloquea el mutex y pone el hilo en espera hasta que otro hilo utilice el broadcast
          // Mutex is relocked at this point.
 #        ifdef DEBUG
          printf("Thread %ld > Awakened in barrier %d\n", my_rank, i);
          fflush(stdout);
 #        endif
       }
-      pthread_mutex_unlock(&barrier_mutex);
+      pthread_mutex_unlock(&barrier_mutex); //desbloquean el candado
 #     ifdef DEBUG
       if (my_rank == 0) {
          printf("All threads completed barrier %d\n", i);
